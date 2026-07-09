@@ -257,6 +257,110 @@
     cursor: pointer;
   }
   .fixed-pill:hover { background: #ddd6fe; }
+  .rollover-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    background: #dcfce7;
+    color: #15803d;
+    border-radius: 4px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .rollover-pill.negative { background: #fee2e2; color: #b91c1c; }
+  .category-amount .rolled { font-size: 12px; color: #15803d; font-weight: 600; }
+  .category-amount .rolled.negative { color: #b91c1c; }
+  /* Quick-add favorites */
+  .favorites-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .fav-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 12px;
+    background: #f1f5f9;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  .fav-chip:hover { background: #ede9fe; border-color: #c4b5fd; }
+  .fav-chip .fav-amt { color: #6d28d9; }
+  .fav-chip .fav-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .fav-manage {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    background: transparent;
+    color: #6d28d9;
+    border: 1px dashed #c4b5fd;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .fav-manage:hover { background: #f5f3ff; }
+  .fav-empty { font-size: 12px; color: #94a3b8; }
+  .fav-edit-row {
+    display: grid;
+    grid-template-columns: 1.4fr 90px 1.2fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .fav-edit-row input, .fav-edit-row select { font-size: 13px; }
+  .rollover-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+    cursor: pointer;
+  }
+  .rollover-toggle input { width: auto; }
+  .rollover-select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+  }
+  .rollover-select label { white-space: nowrap; }
+  .rollover-select select { flex: 1; font-size: 13px; }
+  .pool-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; padding: 2px 6px;
+    background: #e0f2fe; color: #0369a1; border-radius: 4px;
+    margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .pool-pill.draw { background: #fef3c7; color: #b45309; }
+  .pool-card {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+    padding: 14px 16px; margin-bottom: 18px;
+    background: linear-gradient(135deg, #f0f9ff, #eef2ff);
+    border: 1px solid #bae6fd; border-radius: 12px;
+  }
+  .pool-card .pool-main { display: flex; flex-direction: column; }
+  .pool-card .pool-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #0369a1;
+  }
+  .pool-card .pool-value { font-size: 26px; font-weight: 800; color: #0c4a6e; }
+  .pool-card .pool-value.negative { color: #b91c1c; }
+  .pool-card .pool-sub { font-size: 12px; color: #475569; }
+  .pool-card .pool-members { font-size: 12px; color: #64748b; margin-left: auto; text-align: right; max-width: 45%; }
   .category-row .edit-fixed {
     margin-top: 6px;
     display: none;
@@ -618,12 +722,14 @@ const ICONS = {
   download: '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
 };
 
-// Anchor: Friday May 15, 2026 is the LAST DAY of period 0 (period 0 spans May 2 - May 15).
-// Period 1 = May 16 - May 29 (ends Fri payday)
-// Period 2 = May 30 - June 12 (ends Fri payday)
-// Periods always end on a Friday (payday).
-const ANCHOR_END_DATE = '2026-05-15'; // last day of period 0 (a Friday payday)
-const PERIOD_DAYS = 14;
+// SEMI-MONTHLY pay periods (matches Cameron's real 15th / end-of-month paychecks).
+// Two periods per calendar month:
+//   1st half  = 1st  – 15th          (payday ~ the 15th)
+//   2nd half  = 16th – end of month  (payday ~ last day of month)
+// Period IDs are a stable, sequential integer: year*24 + (month*2) + half,
+// where month is 0-based and half = 0 for the 1st–15th, 1 for the 16th–EOM.
+// Adding/subtracting 1 always moves to the adjacent half-month, including
+// across month and year boundaries.
 
 const DEFAULT_CATEGORIES = [
   { name: 'Housing', budget: 700, color: '#6366f1',
@@ -667,9 +773,11 @@ let state = {
   categories: [],
   transactions: [],
   fixedOverrides: {},
+  favorites: [],
   currentPeriodId: 0,
   modal: null,
   editingCats: [],
+  editingFavs: [],
   parseResults: null,
   csvData: null,
   manualText: '',
@@ -683,7 +791,21 @@ let state = {
   flexPrompt: null,
 };
 
-const STORAGE_KEY = 'budgetTracker:v3';
+const STORAGE_KEY = 'budgetTracker:v4';
+
+// Normalize categories to the current shape. rolloverMode is one of
+// 'none' | 'self' | 'pool'. Older data used a boolean `rollover` (true == 'self').
+function normalizeCategories(cats) {
+  return (cats || []).map(c => ({
+    name: c.name,
+    budget: c.budget || 0,
+    color: c.color || '#6b7280',
+    keywords: c.keywords || [],
+    fixedMonthly: c.fixedMonthly || 0,
+    fixedDescription: c.fixedDescription || '',
+    rolloverMode: c.rolloverMode || (c.rollover ? 'self' : 'none'),
+  }));
+}
 
 function loadState() {
   try {
@@ -693,14 +815,24 @@ function loadState() {
       state.categories = data.categories || DEFAULT_CATEGORIES;
       state.transactions = data.transactions || [];
       state.fixedOverrides = data.fixedOverrides || {};
+      state.favorites = data.favorites || [];
     } else {
-      // Try to migrate from v2
-      const oldSaved = localStorage.getItem('budgetTracker:v2');
-      if (oldSaved) {
-        const oldData = JSON.parse(oldSaved);
+      // One-time migration from an older bi-weekly schema (v3/v2). The period
+      // numbering changed with the semi-monthly switch, so any stored
+      // periodOverride values and per-period fixed overrides no longer point at
+      // the right period. Drop them — transactions then fall into their natural
+      // half-month by date, and fixed bills use their standard half-of-monthly
+      // split. Real transaction data (date, amount, category, etc.) is kept.
+      const legacy = localStorage.getItem('budgetTracker:v3') || localStorage.getItem('budgetTracker:v2');
+      if (legacy) {
+        const oldData = JSON.parse(legacy);
         state.categories = oldData.categories || DEFAULT_CATEGORIES;
-        state.transactions = oldData.transactions || [];
-        state.fixedOverrides = oldData.fixedOverrides || {};
+        state.transactions = (oldData.transactions || []).map(t => {
+          const { periodOverride, ...rest } = t;
+          return rest;
+        });
+        state.fixedOverrides = {};
+        saveState();
       } else {
         state.categories = DEFAULT_CATEGORIES;
       }
@@ -708,14 +840,8 @@ function loadState() {
   } catch (e) {
     state.categories = DEFAULT_CATEGORIES;
   }
-  state.categories = state.categories.map(c => ({
-    name: c.name,
-    budget: c.budget || 0,
-    color: c.color || '#6b7280',
-    keywords: c.keywords || [],
-    fixedMonthly: c.fixedMonthly || 0,
-    fixedDescription: c.fixedDescription || '',
-  }));
+  state.categories = normalizeCategories(state.categories);
+  if (!Array.isArray(state.favorites)) state.favorites = [];
   state.currentPeriodId = getCurrentPeriodId();
 }
 
@@ -725,6 +851,7 @@ function saveState() {
       categories: state.categories,
       transactions: state.transactions,
       fixedOverrides: state.fixedOverrides,
+      favorites: state.favorites,
     }));
   } catch (e) { console.warn('Save failed', e); }
 }
@@ -737,29 +864,24 @@ function formatISO(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// Period 0 ENDS on ANCHOR_END_DATE. So period N ends on anchor + N*14 days.
-// Period N starts on anchor - 13 + N*14 days.
+// Period bounds are derived directly from the semi-monthly period ID
+// (see the note at the top): 1st half = 1st–15th, 2nd half = 16th–EOM.
 function getCurrentPeriodId() {
-  const anchorEnd = parseISO(ANCHOR_END_DATE);
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const diffDays = Math.floor((today - anchorEnd) / (1000 * 60 * 60 * 24));
-  // If diffDays <= 0, we're in period 0 or before. If positive, we're past anchor end.
-  // Period N ends at day N*14. Current period contains today.
-  // diffDays = 0 → end of period 0
-  // diffDays = 1 → start of period 1 (day 1 of 14)
-  // diffDays = 14 → end of period 1
-  if (diffDays <= 0) {
-    return Math.floor((diffDays + 13) / 14);
-  }
-  return Math.ceil(diffDays / 14);
+  return getPeriodForDate(todayStr());
 }
 function getPeriodBounds(periodId) {
-  const anchorEnd = parseISO(ANCHOR_END_DATE);
-  const end = new Date(anchorEnd);
-  end.setDate(anchorEnd.getDate() + periodId * PERIOD_DAYS);
-  const start = new Date(end);
-  start.setDate(end.getDate() - (PERIOD_DAYS - 1));
+  const year = Math.floor(periodId / 24);
+  const rem = periodId - year * 24;
+  const month = Math.floor(rem / 2); // 0-based month
+  const half = rem % 2;              // 0 = 1st–15th, 1 = 16th–EOM
+  let start, end;
+  if (half === 0) {
+    start = new Date(year, month, 1);
+    end = new Date(year, month, 15);
+  } else {
+    start = new Date(year, month, 16);
+    end = new Date(year, month + 1, 0); // day 0 of next month = last day of this month
+  }
   return { start, end, startISO: formatISO(start), endISO: formatISO(end) };
 }
 function formatPeriodLabel(periodId) {
@@ -777,16 +899,12 @@ function inPeriod(dateStr, periodId) {
 
 // Find which period a date falls into naturally (before any override)
 function getPeriodForDate(dateStr) {
-  const anchorEnd = parseISO(ANCHOR_END_DATE);
   const d = parseISO(dateStr);
-  const diffDays = Math.floor((d - anchorEnd) / (1000 * 60 * 60 * 24));
-  if (diffDays <= 0) {
-    return Math.floor((diffDays + 13) / 14);
-  }
-  return Math.ceil(diffDays / 14);
+  const half = d.getDate() <= 15 ? 0 : 1;
+  return d.getFullYear() * 24 + d.getMonth() * 2 + half;
 }
 
-// Is the given date a payday Friday (i.e. the last day of any period)?
+// Is the given date a payday (i.e. the last day of its period: the 15th or EOM)?
 function isPaydayFriday(dateStr) {
   const periodId = getPeriodForDate(dateStr);
   const { endISO } = getPeriodBounds(periodId);
@@ -904,6 +1022,71 @@ function getSpendingByCategory() {
     else variable['Other'] = (variable['Other'] || 0) + t.amount;
   });
   return variable;
+}
+
+// Total spent (variable + fixed) for one category in an arbitrary period.
+function spentInPeriodForCat(categoryName, periodId) {
+  let v = 0;
+  state.transactions.forEach(t => {
+    if (t.category === categoryName && isTxInPeriod(t, periodId)) v += t.amount;
+  });
+  return v + getFixedForPeriod(periodId, categoryName);
+}
+
+// The earliest period that has any transaction — the anchor for rollover so we
+// don't accumulate "unspent budget" for periods before the user started.
+function getFirstActivityPeriod() {
+  let minP = null;
+  state.transactions.forEach(t => {
+    const p = getTxPeriod(t);
+    if (minP === null || p < minP) minP = p;
+  });
+  return minP;
+}
+
+// Uncapped carried-over balance for a rollover category, as of (but not
+// including) the given period. Unspent budget from every prior period adds to
+// the pot; overspending draws it down. No ceiling — it can grow indefinitely
+// (and can go negative if the category is chronically overspent).
+function getRolloverCarry(categoryName, uptoPeriodId) {
+  const cat = state.categories.find(c => c.name === categoryName);
+  if (!cat || cat.rolloverMode !== 'self') return 0;
+  const minP = getFirstActivityPeriod();
+  if (minP === null || uptoPeriodId <= minP) return 0;
+  let carry = 0;
+  for (let p = minP; p < uptoPeriodId; p++) {
+    carry += (cat.budget || 0) - spentInPeriodForCat(categoryName, p);
+  }
+  return carry;
+}
+
+// ---- Shared rollover pool ----
+// Categories set to rolloverMode 'pool' feed one shared, spendable cushion.
+// Any pooled category may overspend its base budget; the pool covers it.
+// Unspent pooled budget adds to the pool. No cap.
+function getPoolCategories() {
+  return state.categories.filter(c => c.rolloverMode === 'pool');
+}
+// Pool balance carried IN to a period (all pooled categories' net over/under
+// for every period from first activity up to — but not including — uptoPeriodId).
+function getPoolCarryIn(uptoPeriodId) {
+  const pool = getPoolCategories();
+  if (!pool.length) return 0;
+  const minP = getFirstActivityPeriod();
+  if (minP === null || uptoPeriodId <= minP) return 0;
+  let bal = 0;
+  for (let p = minP; p < uptoPeriodId; p++) {
+    pool.forEach(c => { bal += (c.budget || 0) - spentInPeriodForCat(c.name, p); });
+  }
+  return bal;
+}
+// Live pool balance INCLUDING the given (current) period's activity so far.
+function getPoolLiveBalance(periodId) {
+  const pool = getPoolCategories();
+  if (!pool.length) return 0;
+  let bal = getPoolCarryIn(periodId);
+  pool.forEach(c => { bal += (c.budget || 0) - spentInPeriodForCat(c.name, periodId); });
+  return bal;
 }
 
 // Try to add a transaction. If it's on a payday Friday AND the viewing period differs from the natural period,
@@ -1063,6 +1246,45 @@ function toggleTxPeriodOverride(id) {
   render();
 }
 
+// ---- Quick-add favorites ----
+// A favorite is a saved one-tap expense: { id, label, amount, category, description }.
+// Tapping a favorite logs the expense into the period currently in view, using
+// the same period/flex logic as any other add.
+function addFavorite(favId) {
+  const f = state.favorites.find(x => x.id === favId);
+  if (!f) return;
+  const txData = {
+    amount: Number(f.amount) || 0,
+    category: f.category || 'Other',
+    description: f.description || f.label || 'Expense',
+    date: getDefaultEntryDate(),
+    source: 'quick',
+  };
+  if (txData.amount <= 0) return;
+  attemptAddTransaction(txData);
+  if (!state.flexPrompt) render();
+}
+function openFavoritesModal() {
+  state.editingFavs = JSON.parse(JSON.stringify(state.favorites));
+  state.modal = 'favorites';
+  render();
+}
+function saveFavorites() {
+  state.favorites = state.editingFavs
+    .filter(f => (f.label || '').trim() && (Number(f.amount) || 0) > 0)
+    .map(f => ({
+      id: f.id || uid(),
+      label: f.label.trim(),
+      amount: Number(f.amount) || 0,
+      category: f.category || 'Other',
+      description: (f.description || '').trim() || f.label.trim(),
+    }));
+  state.modal = null;
+  state.editingFavs = [];
+  saveState();
+  render();
+}
+
 function parseCSV(text) {
   const rows = [];
   let cur = [], val = '', inQ = false;
@@ -1180,6 +1402,7 @@ function exportData() {
     categories: state.categories,
     transactions: state.transactions,
     fixedOverrides: state.fixedOverrides,
+    favorites: state.favorites,
     exportedAt: new Date().toISOString(),
   }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
@@ -1198,9 +1421,10 @@ function importData(event) {
       const data = JSON.parse(e.target.result);
       if (!data.categories || !data.transactions) throw new Error('Invalid backup file.');
       if (!confirm(`Import ${data.transactions.length} transactions and ${data.categories.length} categories? This replaces current data.`)) return;
-      state.categories = data.categories;
+      state.categories = normalizeCategories(data.categories);
       state.transactions = data.transactions;
       state.fixedOverrides = data.fixedOverrides || {};
+      if (Array.isArray(data.favorites)) state.favorites = data.favorites;
       saveState();
       render();
       alert('Import complete!');
@@ -1241,6 +1465,7 @@ function renderApp() {
     ${renderCategoryBreakdown()}
     ${renderTransactions()}
     ${state.modal === 'settings' ? renderSettingsModal() : ''}
+    ${state.modal === 'favorites' ? renderFavoritesModal() : ''}
     ${state.modal === 'parse' ? renderParseModal() : ''}
     ${state.modal === 'csv' ? renderCsvMappingModal() : ''}
     ${state.flexPrompt ? renderFlexPromptModal() : ''}
@@ -1253,7 +1478,7 @@ function renderHeader() {
     <div class="header">
       <div>
         <h1>${ICONS.dollar} Budget Tracker</h1>
-        <p>Fri–Fri pay periods · Friday is flex day · Click ⚙ to edit anything</p>
+        <p>Semi-monthly pay periods (1st–15th · 16th–end) · payday is flex day · Click ⚙ to edit anything</p>
       </div>
       <div class="header-controls">
         <div class="period-nav">
@@ -1273,9 +1498,13 @@ function renderStats() {
   const totalVariableSpent = Object.values(variable).reduce((s, v) => s + v, 0);
   const totalFixed = state.categories.reduce((s, c) => s + getFixedForPeriod(state.currentPeriodId, c.name), 0);
   const totalBudget = state.categories.reduce((s, c) => s + (c.budget || 0), 0);
+  const totalSelfCarry = state.categories.reduce((s, c) => s + getRolloverCarry(c.name, state.currentPeriodId), 0);
+  const poolCarryIn = getPoolCarryIn(state.currentPeriodId);
+  const totalCarry = totalSelfCarry + poolCarryIn;
   const totalSpent = totalVariableSpent + totalFixed;
-  const remaining = totalBudget - totalSpent;
+  const remaining = totalBudget + totalCarry - totalSpent;
   const txCount = getCurrentPeriodTx().length;
+  const carryShown = Math.abs(totalCarry) >= 0.005;
 
   return `
     <div class="stats">
@@ -1296,6 +1525,7 @@ function renderStats() {
       <div class="stat-card">
         <div class="stat-label">Remaining</div>
         <div class="stat-value ${remaining < 0 ? 'negative' : 'positive'}">$${remaining.toFixed(2)}</div>
+        ${carryShown ? `<div class="stat-sub">incl. ${totalCarry < 0 ? '−' : '+'}$${Math.abs(totalCarry).toFixed(2)} rolled over</div>` : ''}
       </div>
     </div>
   `;
@@ -1316,6 +1546,7 @@ function renderInputs() {
       <div class="panel">
         <h2>${ICONS.sparkle} Add Expense</h2>
         ${renderInputTargetBanner()}
+        ${renderFavoritesBar()}
         <div class="tabs">
           <button class="tab ${state.inputTab === 'natural' ? 'active' : ''}" data-tab="natural">Quick</button>
           <button class="tab ${state.inputTab === 'form' ? 'active' : ''}" data-tab="form">Form</button>
@@ -1338,6 +1569,22 @@ function renderInputs() {
         ${state.fileError ? `<div class="error">${ICONS.alert} ${esc(state.fileError)}</div>` : ''}
         <p class="help-text">Most banks let you export transactions as CSV. Look for "Download" or "Export" in your account history.</p>
       </div>
+    </div>
+  `;
+}
+
+function renderFavoritesBar() {
+  const chips = state.favorites.map(f => {
+    const cat = state.categories.find(c => c.name === f.category);
+    const color = cat ? cat.color : '#6b7280';
+    return `<button class="fav-chip" data-fav-add="${esc(f.id)}" title="Add $${(Number(f.amount)||0).toFixed(2)} · ${esc(f.category)} to the period in view">
+      <span class="fav-dot" style="background:${esc(color)}"></span>${esc(f.label)} <span class="fav-amt">$${(Number(f.amount)||0).toFixed(2)}</span>
+    </button>`;
+  }).join('');
+  return `
+    <div class="favorites-bar">
+      ${chips || '<span class="fav-empty">No quick-adds yet — save your regulars (cfa, gas, coffee…) for one-tap logging.</span>'}
+      <button class="fav-manage" id="manage-favs">${ICONS.plus} ${state.favorites.length ? 'Edit quick-adds' : 'Add quick-add'}</button>
     </div>
   `;
 }
@@ -1389,6 +1636,24 @@ function renderActionsBar() {
   `;
 }
 
+function renderPoolCard() {
+  const poolCats = getPoolCategories();
+  if (!poolCats.length) return '';
+  const carryIn = getPoolCarryIn(state.currentPeriodId);
+  const live = getPoolLiveBalance(state.currentPeriodId);
+  const thisNet = live - carryIn;
+  return `
+    <div class="pool-card">
+      <div class="pool-main">
+        <div class="pool-label">Rollover Pool — available now</div>
+        <div class="pool-value ${live < 0 ? 'negative' : ''}">$${live.toFixed(2)}</div>
+        <div class="pool-sub">Carried in $${carryIn.toFixed(2)} · this period ${thisNet < 0 ? '−' : '+'}$${Math.abs(thisNet).toFixed(2)}</div>
+      </div>
+      <div class="pool-members">Shared cushion for:<br>${poolCats.map(c => esc(c.name)).join(', ')}</div>
+    </div>
+  `;
+}
+
 function renderCategoryBreakdown() {
   const variable = getSpendingByCategory();
   return `
@@ -1397,15 +1662,43 @@ function renderCategoryBreakdown() {
       <p class="help-text" style="margin-top:-12px; margin-bottom:16px">
         Variable spending + fixed bills (purple pill) for this period. Click the pill to adjust just this period.
       </p>
+      ${renderPoolCard()}
       ${state.categories.map(cat => {
         const varSpent = variable[cat.name] || 0;
         const fixed = getFixedForPeriod(state.currentPeriodId, cat.name);
         const spent = varSpent + fixed;
-        const pct = cat.budget > 0 ? (spent / cat.budget) * 100 : 0;
-        const over = spent > cat.budget;
+        const base = cat.budget || 0;
+        const mode = cat.rolloverMode || 'none';
         const hasFixed = cat.fixedMonthly > 0 || fixed > 0;
         const hasOverride = state.fixedOverrides[`${state.currentPeriodId}:${cat.name}`] !== undefined;
         const isEditing = state.openFixedEditor === cat.name;
+
+        let denomBudget = base, pill = '', extraLine = '', barColor = cat.color, amountNegative = false;
+        if (mode === 'self') {
+          const carry = getRolloverCarry(cat.name, state.currentPeriodId);
+          denomBudget = base + carry;
+          const over = spent > denomBudget;
+          amountNegative = over;
+          barColor = over ? '#ef4444' : cat.color;
+          const showCarry = Math.abs(carry) >= 0.005;
+          pill = showCarry
+            ? `<span class="rollover-pill ${carry < 0 ? 'negative' : ''}" title="Unspent budget carried in from earlier periods">${carry < 0 ? '−' : '+'}$${Math.abs(carry).toFixed(2)} rolled</span>`
+            : `<span class="rollover-pill" title="Rolls unspent budget forward to itself">rolls over</span>`;
+          extraLine = showCarry ? `<div class="rolled ${carry < 0 ? 'negative' : ''}">$${base.toFixed(2)} base ${carry < 0 ? '−' : '+'} $${Math.abs(carry).toFixed(2)} rolled</div>` : '';
+        } else if (mode === 'pool') {
+          denomBudget = base;
+          const overBase = spent > base;
+          barColor = overBase ? '#f59e0b' : cat.color;
+          pill = overBase
+            ? `<span class="pool-pill draw" title="Over base this period — the shortfall is drawn from the shared pool">over base → pool</span>`
+            : `<span class="pool-pill" title="Unspent budget feeds the shared pool">→ pool</span>`;
+        } else {
+          denomBudget = base;
+          const over = spent > base;
+          amountNegative = over;
+          barColor = over ? '#ef4444' : cat.color;
+        }
+        const pct = denomBudget > 0 ? (spent / denomBudget) * 100 : (spent > 0 ? 100 : 0);
 
         return `
           <div class="category-row">
@@ -1414,13 +1707,14 @@ function renderCategoryBreakdown() {
                 <div class="color-dot" style="background:${esc(cat.color)}"></div>
                 <span>${esc(cat.name)}</span>
                 ${hasFixed ? `<span class="fixed-pill" data-edit-fixed="${esc(cat.name)}" title="${esc(cat.fixedDescription)}">Fixed $${fixed.toFixed(2)}${hasOverride ? ' *' : ''}</span>` : ''}
+                ${pill}
               </div>
-              <div class="category-amount ${over ? 'negative' : ''}">
-                $${spent.toFixed(2)} <span class="of">/ $${cat.budget}</span>
+              <div class="category-amount ${amountNegative ? 'negative' : ''}">
+                $${spent.toFixed(2)} <span class="of">/ $${denomBudget.toFixed(2)}</span>${extraLine}
               </div>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" style="width:${Math.min(pct, 100)}%; background:${over ? '#ef4444' : cat.color}"></div>
+              <div class="progress-fill" style="width:${Math.min(pct, 100)}%; background:${barColor}"></div>
             </div>
             ${hasFixed && isEditing ? `
               <div class="edit-fixed open">
@@ -1486,7 +1780,7 @@ function renderFlexPromptModal() {
       <div class="modal" style="max-width:500px">
         <div class="modal-header">
           <div>
-            <h3>Friday flex day</h3>
+            <h3>Payday flex day</h3>
             <p style="font-size:12px; color:#64748b; margin-top:4px">${esc(fridayDate)} is payday — which period should this $${txData.amount.toFixed(2)} ${esc(txData.description)} count toward?</p>
           </div>
           <button class="icon-btn" id="cancel-flex">${ICONS.x}</button>
@@ -1495,11 +1789,11 @@ function renderFlexPromptModal() {
           <div class="flex-choice">
             <button class="flex-option" data-flex-choice="${oldPeriodId}">
               <div class="flex-option-title">Old period (ending today)</div>
-              <div class="flex-option-detail">${esc(oldLabel)} · e.g. Friday lunch before paycheck</div>
+              <div class="flex-option-detail">${esc(oldLabel)} · e.g. lunch before the paycheck lands</div>
             </button>
             <button class="flex-option" data-flex-choice="${newPeriodId}">
               <div class="flex-option-title">New period (starting today)</div>
-              <div class="flex-option-detail">${esc(newLabel)} · e.g. Friday evening guilt-free spending</div>
+              <div class="flex-option-detail">${esc(newLabel)} · e.g. payday-evening guilt-free spending</div>
             </button>
           </div>
         </div>
@@ -1541,18 +1835,68 @@ function renderSettingsModal() {
               </div>
 
               <textarea data-cat-keywords="${i}" placeholder="Auto-match keywords (comma-separated): e.g. starbucks, coffee, cafe" style="font-size:12px; min-height:40px; margin-top:10px">${esc((c.keywords || []).join(', '))}</textarea>
+
+              <div class="rollover-select">
+                <label>Rollover:</label>
+                <select data-cat-rollover="${i}">
+                  <option value="none" ${(c.rolloverMode || 'none') === 'none' ? 'selected' : ''}>No rollover — resets each period</option>
+                  <option value="self" ${c.rolloverMode === 'self' ? 'selected' : ''}>Rolls over to itself (own bucket)</option>
+                  <option value="pool" ${c.rolloverMode === 'pool' ? 'selected' : ''}>Rolls into shared pool</option>
+                </select>
+              </div>
             </div>
           `).join('')}
           <button class="add-row-btn" id="add-cat">${ICONS.plus} Add category</button>
           <p class="help-text" style="margin-top: 16px">
-            <strong>Per-period budget</strong> is the spending cap for one bi-weekly period (Sat–Fri).
+            <strong>Per-period budget</strong> is the spending cap for one semi-monthly period (1st–15th or 16th–end of month).
             <strong>Fixed monthly</strong> auto-splits in half across the 2 periods of each month.
             <strong>Keywords</strong> auto-categorize transactions by merchant name.
+            <strong>Rollover</strong>: "to itself" keeps unspent budget in that category's own bucket; "shared pool" combines the leftovers of every pooled category into one spendable cushion — any pooled category can overspend and the pool covers it. No cap either way.
           </p>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" id="cancel-settings">Cancel</button>
           <button class="btn-success" id="save-settings">Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFavoritesModal() {
+  return `
+    <div class="modal-backdrop" data-modal-bg>
+      <div class="modal">
+        <div class="modal-header">
+          <div>
+            <h3>Quick-add favorites</h3>
+            <p style="font-size:12px; color:#64748b; margin-top:4px">Saved one-tap expenses. Tapping a chip logs it to the period you're viewing.</p>
+          </div>
+          <button class="icon-btn" id="close-favs">${ICONS.x}</button>
+        </div>
+        <div class="modal-body">
+          ${state.editingFavs.length ? `
+            <div class="fav-edit-row" style="font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px">
+              <span>Label</span><span>Amount</span><span>Category</span><span></span>
+            </div>` : ''}
+          ${state.editingFavs.map((f, i) => `
+            <div class="fav-edit-row">
+              <input type="text" data-fav-label="${i}" value="${esc(f.label || '')}" placeholder="e.g. Chick-fil-A lunch">
+              <input type="number" step="0.01" data-fav-amount="${i}" value="${f.amount != null ? f.amount : ''}" placeholder="0.00">
+              <select data-fav-cat="${i}">
+                ${state.categories.map(c => `<option value="${esc(c.name)}" ${c.name === f.category ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+              </select>
+              <button class="icon-btn" data-fav-delete="${i}" title="Delete">${ICONS.trash}</button>
+            </div>
+          `).join('')}
+          <button class="add-row-btn" id="add-fav">${ICONS.plus} Add quick-add</button>
+          <p class="help-text" style="margin-top:16px">
+            The <strong>label</strong> is what shows on the chip. The <strong>amount</strong> and <strong>category</strong> are what get logged. Description defaults to the label. Favorites are saved in your data and included in JSON backups.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancel-favs">Cancel</button>
+          <button class="btn-success" id="save-favs">Save</button>
         </div>
       </div>
     </div>
@@ -1769,6 +2113,7 @@ function attachListeners() {
         keywords: c.keywords || [],
         fixedMonthly: Number(c.fixedMonthly) || 0,
         fixedDescription: c.fixedDescription || '',
+        rolloverMode: c.rolloverMode || 'none',
       }));
     state.modal = null;
     saveState();
@@ -1796,6 +2141,9 @@ function attachListeners() {
         e.target.value.split(',').map(s => s.trim()).filter(Boolean);
     };
   });
+  document.querySelectorAll('[data-cat-rollover]').forEach(sel => {
+    sel.onchange = (e) => { state.editingCats[+sel.dataset.catRollover].rolloverMode = e.target.value; };
+  });
   document.querySelectorAll('[data-cat-delete]').forEach(b => {
     b.onclick = () => {
       const i = +b.dataset.catDelete;
@@ -1805,7 +2153,43 @@ function attachListeners() {
   });
   const addCat = document.getElementById('add-cat');
   if (addCat) addCat.onclick = () => {
-    state.editingCats.push({ name: '', budget: 0, color: '#6b7280', keywords: [], fixedMonthly: 0, fixedDescription: '' });
+    state.editingCats.push({ name: '', budget: 0, color: '#6b7280', keywords: [], fixedMonthly: 0, fixedDescription: '', rolloverMode: 'none' });
+    render();
+  };
+
+  // Quick-add favorites: chips + manage
+  document.querySelectorAll('[data-fav-add]').forEach(b => {
+    b.onclick = () => addFavorite(b.dataset.favAdd);
+  });
+  const manageFavs = document.getElementById('manage-favs');
+  if (manageFavs) manageFavs.onclick = openFavoritesModal;
+
+  // Favorites modal
+  const closeFavs = document.getElementById('close-favs');
+  if (closeFavs) closeFavs.onclick = closeModal;
+  const cancelFavs = document.getElementById('cancel-favs');
+  if (cancelFavs) cancelFavs.onclick = closeModal;
+  const saveFavs = document.getElementById('save-favs');
+  if (saveFavs) saveFavs.onclick = saveFavorites;
+  document.querySelectorAll('[data-fav-label]').forEach(inp => {
+    inp.oninput = (e) => { state.editingFavs[+inp.dataset.favLabel].label = e.target.value; };
+  });
+  document.querySelectorAll('[data-fav-amount]').forEach(inp => {
+    inp.oninput = (e) => { state.editingFavs[+inp.dataset.favAmount].amount = e.target.value; };
+  });
+  document.querySelectorAll('[data-fav-cat]').forEach(s => {
+    s.onchange = (e) => { state.editingFavs[+s.dataset.favCat].category = e.target.value; };
+  });
+  document.querySelectorAll('[data-fav-delete]').forEach(b => {
+    b.onclick = () => {
+      state.editingFavs = state.editingFavs.filter((_, idx) => idx !== +b.dataset.favDelete);
+      render();
+    };
+  });
+  const addFav = document.getElementById('add-fav');
+  if (addFav) addFav.onclick = () => {
+    const firstCat = state.categories[0] ? state.categories[0].name : 'Other';
+    state.editingFavs.push({ id: uid(), label: '', amount: '', category: firstCat, description: '' });
     render();
   };
 
@@ -1869,6 +2253,7 @@ function attachListeners() {
 function closeModal() {
   state.modal = null;
   state.editingCats = [];
+  state.editingFavs = [];
   state.parseResults = null;
   state.csvData = null;
   render();
