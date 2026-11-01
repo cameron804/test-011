@@ -274,6 +274,81 @@
   .rollover-pill.negative { background: #fee2e2; color: #b91c1c; }
   .category-amount .rolled { font-size: 12px; color: #15803d; font-weight: 600; }
   .category-amount .rolled.negative { color: #b91c1c; }
+  /* Balance adjustments: pay back / move money */
+  .adj-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 4px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .adj-pill.negative { background: #fef3c7; color: #b45309; }
+  .adj-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #dcfce7; color: #15803d;
+  }
+  .adj-badge.transfer { background: #e0f2fe; color: #0369a1; }
+  .tx-row.adj-row { background: #f8fafc; border-radius: 8px; }
+  .tx-row.adj-row .tx-amount.credit { color: #15803d; }
+  .adj-type-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .adj-type-row button {
+    flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0;
+    background: #fff; font-weight: 600; font-size: 13px; cursor: pointer; color: #475569;
+  }
+  .adj-type-row button.active { border-color: #0ea5e9; background: #f0f9ff; color: #0369a1; }
+  .adj-balance-hint { font-size: 12px; color: #64748b; margin-top: 6px; }
+  /* Transactions: search, undo, inline edit */
+  .tx-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tx-head h2 { margin: 0; }
+  .tx-search { flex: 0 1 260px; min-width: 160px; padding: 8px 10px; font-size: 13px; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .undo-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+    padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px;
+  }
+  .undo-bar button { background: #b45309; color: #fff; border: 0; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; }
+  .tx-info[data-edit-tx], .tx-amount[data-edit-tx] { cursor: pointer; }
+  .tx-info[data-edit-tx]:hover .tx-desc { text-decoration: underline dotted; }
+  .tx-edit-row { flex-direction: column; align-items: stretch; gap: 8px; background: #f8fafc; border-radius: 8px; padding: 10px; }
+  .tx-edit-grid { display: grid; grid-template-columns: 110px 1fr 150px 160px; gap: 8px; }
+  .tx-edit-grid input, .tx-edit-grid select { padding: 8px; font-size: 13px; border: 1px solid #e2e8f0; border-radius: 6px; width: 100%; }
+  .tx-edit-actions { display: flex; justify-content: flex-end; gap: 8px; }
+  .dup-badge { font-size: 10px; font-weight: 700; background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+  /* Recent periods trend strip */
+  .trend-panel { margin-bottom: 24px; padding: 16px 20px; }
+  .trend-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .trend-head h2 { margin: 0; }
+  .trend-avg { font-size: 12px; color: #64748b; }
+  .trend-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; }
+  .trend-col { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 4px 4px; cursor: pointer; text-align: center; }
+  .trend-col:hover { background: #f8fafc; border-color: #e2e8f0; }
+  .trend-col.viewing { background: #f0f9ff; border-color: #bae6fd; }
+  .trend-col.empty { opacity: 0.45; }
+  .trend-bars { position: relative; height: 64px; display: flex; align-items: flex-end; justify-content: center; }
+  .trend-budget { position: absolute; bottom: 0; width: 60%; background: #e2e8f0; border-radius: 4px 4px 0 0; }
+  .trend-spent { position: relative; width: 36%; background: #334155; border-radius: 4px 4px 0 0; min-height: 2px; }
+  .trend-spent.over { background: #ef4444; }
+  .trend-amt { font-size: 12px; font-weight: 600; color: #334155; margin-top: 4px; }
+  .trend-amt.over { color: #b91c1c; }
+  .trend-label { font-size: 11px; color: #64748b; }
+  @media (max-width: 640px) {
+    .tx-edit-grid { grid-template-columns: 1fr 1fr; }
+    .trend-strip { gap: 4px; }
+  }
   /* Quick-add favorites */
   .favorites-bar {
     display: flex;
@@ -774,6 +849,17 @@ let state = {
   transactions: [],
   fixedOverrides: {},
   favorites: [],
+  // Balance adjustments: { id, date, periodId, type: 'payback'|'transfer', amount, to, from, note }
+  // 'payback' credits `to` with outside money (a refund, a bonus, cash you set aside).
+  // 'transfer' moves money out of `from` and into `to` (net zero overall).
+  adjustments: [],
+  adjForm: { type: 'payback', amount: '', to: '', from: '', date: '', note: '' },
+  adjError: '',
+  txSearch: '',
+  editingTxId: null,
+  editDraft: null,
+  // Last deleted item for one-step undo: { kind: 'tx'|'adj', item, label }
+  undo: null,
   currentPeriodId: 0,
   modal: null,
   editingCats: [],
@@ -816,6 +902,7 @@ function loadState() {
       state.transactions = data.transactions || [];
       state.fixedOverrides = data.fixedOverrides || {};
       state.favorites = data.favorites || [];
+      state.adjustments = Array.isArray(data.adjustments) ? data.adjustments : [];
     } else {
       // One-time migration from an older bi-weekly schema (v3/v2). The period
       // numbering changed with the semi-monthly switch, so any stored
@@ -842,6 +929,7 @@ function loadState() {
   }
   state.categories = normalizeCategories(state.categories);
   if (!Array.isArray(state.favorites)) state.favorites = [];
+  if (!Array.isArray(state.adjustments)) state.adjustments = [];
   state.currentPeriodId = getCurrentPeriodId();
 }
 
@@ -852,6 +940,7 @@ function saveState() {
       transactions: state.transactions,
       fixedOverrides: state.fixedOverrides,
       favorites: state.favorites,
+      adjustments: state.adjustments,
     }));
   } catch (e) { console.warn('Save failed', e); }
 }
@@ -1033,13 +1122,45 @@ function spentInPeriodForCat(categoryName, periodId) {
   return v + getFixedForPeriod(periodId, categoryName);
 }
 
-// The earliest period that has any transaction — the anchor for rollover so we
-// don't accumulate "unspent budget" for periods before the user started.
+// ---- Balance adjustments (pay back / move money) ----
+// Net adjustment to one category in one period: credits in (payback `to`, or
+// transfer `to`) minus debits out (transfer `from`).
+function adjustmentsForCat(categoryName, periodId) {
+  let net = 0;
+  state.adjustments.forEach(a => {
+    if (a.periodId !== periodId) return;
+    const amt = Number(a.amount) || 0;
+    if (a.to === categoryName) net += amt;
+    if (a.type === 'transfer' && a.from === categoryName) net -= amt;
+  });
+  return net;
+}
+// Adjustments that live in a given period (for the list view).
+function getAdjustmentsInPeriod(periodId) {
+  return state.adjustments.filter(a => a.periodId === periodId);
+}
+// Outside money brought in during a period (paybacks only; transfers net to zero).
+function paybacksInPeriod(periodId) {
+  return state.adjustments
+    .filter(a => a.periodId === periodId && a.type === 'payback')
+    .reduce((s, a) => s + (Number(a.amount) || 0), 0);
+}
+// Budget available to a category in a period, before spending:
+// base budget plus any money paid back into or moved into/out of it.
+function budgetWithAdjustments(cat, periodId) {
+  return (cat.budget || 0) + adjustmentsForCat(cat.name, periodId);
+}
+
+// The earliest period that has any transaction or adjustment — the anchor for
+// rollover so we don't accumulate "unspent budget" for periods before the user started.
 function getFirstActivityPeriod() {
   let minP = null;
   state.transactions.forEach(t => {
     const p = getTxPeriod(t);
     if (minP === null || p < minP) minP = p;
+  });
+  state.adjustments.forEach(a => {
+    if (minP === null || a.periodId < minP) minP = a.periodId;
   });
   return minP;
 }
@@ -1055,7 +1176,7 @@ function getRolloverCarry(categoryName, uptoPeriodId) {
   if (minP === null || uptoPeriodId <= minP) return 0;
   let carry = 0;
   for (let p = minP; p < uptoPeriodId; p++) {
-    carry += (cat.budget || 0) - spentInPeriodForCat(categoryName, p);
+    carry += budgetWithAdjustments(cat, p) - spentInPeriodForCat(categoryName, p);
   }
   return carry;
 }
@@ -1076,7 +1197,7 @@ function getPoolCarryIn(uptoPeriodId) {
   if (minP === null || uptoPeriodId <= minP) return 0;
   let bal = 0;
   for (let p = minP; p < uptoPeriodId; p++) {
-    pool.forEach(c => { bal += (c.budget || 0) - spentInPeriodForCat(c.name, p); });
+    pool.forEach(c => { bal += budgetWithAdjustments(c, p) - spentInPeriodForCat(c.name, p); });
   }
   return bal;
 }
@@ -1085,8 +1206,86 @@ function getPoolLiveBalance(periodId) {
   const pool = getPoolCategories();
   if (!pool.length) return 0;
   let bal = getPoolCarryIn(periodId);
-  pool.forEach(c => { bal += (c.budget || 0) - spentInPeriodForCat(c.name, periodId); });
+  pool.forEach(c => { bal += budgetWithAdjustments(c, periodId) - spentInPeriodForCat(c.name, periodId); });
   return bal;
+}
+
+// Current available balance for a category in the period in view:
+// base budget + rolled-in carry (self mode) + this period's adjustments - spent.
+function availableForCat(cat, periodId) {
+  const carry = cat.rolloverMode === 'self' ? getRolloverCarry(cat.name, periodId) : 0;
+  return budgetWithAdjustments(cat, periodId) + carry - spentInPeriodForCat(cat.name, periodId);
+}
+
+function addAdjustment(data) {
+  // data: { type, amount, to, from, date, note }
+  const amt = Number(data.amount);
+  if (isNaN(amt) || amt <= 0) return 'Enter an amount greater than zero.';
+  const toCat = state.categories.find(c => c.name === data.to);
+  if (!toCat) return 'Pick the category the money goes to.';
+  let fromName = null;
+  if (data.type === 'transfer') {
+    const fromCat = state.categories.find(c => c.name === data.from);
+    if (!fromCat) return 'Pick the category the money comes from.';
+    if (fromCat.name === toCat.name) return 'From and To must be different categories.';
+    fromName = fromCat.name;
+  }
+  const date = data.date || getDefaultEntryDate();
+  state.adjustments.unshift({
+    id: uid(),
+    date,
+    // Lands in the period you are viewing, same as an expense.
+    periodId: state.currentPeriodId,
+    type: data.type === 'transfer' ? 'transfer' : 'payback',
+    amount: Math.round(amt * 100) / 100,
+    to: toCat.name,
+    from: fromName,
+    note: (data.note || '').trim(),
+  });
+  saveState();
+  return '';
+}
+function deleteAdjustment(id) {
+  const a = state.adjustments.find(x => x.id === id);
+  state.adjustments = state.adjustments.filter(a => a.id !== id);
+  if (a) state.undo = { kind: 'adj', item: a, label: `${a.type === 'transfer' ? 'move' : 'pay back'} of $${(Number(a.amount)||0).toFixed(2)}` };
+  saveState();
+  render();
+}
+function submitAdjForm() {
+  state.adjError = addAdjustment(state.adjForm);
+  if (!state.adjError) {
+    state.adjForm = { type: state.adjForm.type, amount: '', to: '', from: '', date: '', note: '' };
+  }
+  render();
+}
+
+// Natural-language shortcuts for adjustments, used by the Quick box:
+//   "paid back $1000 to Dining Out"        -> payback
+//   "pay back 250 dining out"              -> payback
+//   "move $200 from Groceries to Shopping" -> transfer
+// Returns null when the text is not an adjustment (fall through to expense parsing).
+function parseAdjustmentEntry(text) {
+  const clean = (text || '').trim();
+  if (!clean) return null;
+  const findCat = (s) => {
+    const q = (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!q) return null;
+    return state.categories.find(c => c.name.toLowerCase() === q)
+      || state.categories.find(c => q.startsWith(c.name.toLowerCase()) || c.name.toLowerCase().startsWith(q))
+      || null;
+  };
+  let m = clean.match(/^(?:move|moved|transfer|transferred|shift)\s+\$?\s*(\d+(?:\.\d{1,2})?)\s+from\s+(.+?)\s+(?:to|into)\s+(.+?)\s*$/i);
+  if (m) {
+    const from = findCat(m[2]), to = findCat(m[3]);
+    return { type: 'transfer', amount: parseFloat(m[1]), from: from ? from.name : m[2].trim(), to: to ? to.name : m[3].trim(), note: '' };
+  }
+  m = clean.match(/^(?:paid\s*back|pay\s*back|payback|repaid|repay|put\s+back|returned?|credit)\s+\$?\s*(\d+(?:\.\d{1,2})?)\s+(?:to|into|in)?\s*(.+?)\s*$/i);
+  if (m) {
+    const to = findCat(m[2]);
+    return { type: 'payback', amount: parseFloat(m[1]), to: to ? to.name : m[2].trim(), from: null, note: '' };
+  }
+  return null;
 }
 
 // Try to add a transaction. If it's on a payday Friday AND the viewing period differs from the natural period,
@@ -1155,6 +1354,18 @@ function cancelFlexChoice() {
 function addManualEntry() {
   state.manualError = '';
   const defaultDate = getDefaultEntryDate();
+  // Adjustment phrasing ("paid back $1000 to Dining Out", "move $200 from X to Y") first.
+  const adj = parseAdjustmentEntry(state.manualText);
+  if (adj) {
+    const err = addAdjustment({ ...adj, date: defaultDate });
+    if (err) {
+      state.manualError = err + ' (Categories must match an existing name.)';
+    } else {
+      state.manualText = '';
+    }
+    render();
+    return;
+  }
   const parsed = parseNaturalEntry(state.manualText, defaultDate);
   if (!parsed) {
     state.manualError = "Couldn't find an amount. Try 'spent $42 on groceries' or '$15 lunch yesterday'";
@@ -1223,7 +1434,45 @@ function addBulkEntries() {
 }
 
 function deleteTransaction(id) {
+  const t = state.transactions.find(x => x.id === id);
   state.transactions = state.transactions.filter(t => t.id !== id);
+  if (t) state.undo = { kind: 'tx', item: t, label: `$${t.amount.toFixed(2)} ${t.description}` };
+  saveState();
+  render();
+}
+function undoDelete() {
+  if (!state.undo) return;
+  if (state.undo.kind === 'tx') state.transactions.unshift(state.undo.item);
+  else state.adjustments.unshift(state.undo.item);
+  state.undo = null;
+  saveState();
+  render();
+}
+function startEditTx(id) {
+  state.editingTxId = id;
+  const t = state.transactions.find(x => x.id === id);
+  state.editDraft = t ? { amount: t.amount, description: t.description, date: t.date, category: t.category } : null;
+  render();
+}
+function saveEditTx(id) {
+  const d = state.editDraft;
+  const t = state.transactions.find(x => x.id === id);
+  if (!t || !d) { state.editingTxId = null; render(); return; }
+  const amt = parseFloat(d.amount);
+  if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount.'); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.date || '')) { alert('Enter a valid date.'); return; }
+  t.amount = Math.round(amt * 100) / 100;
+  t.description = (d.description || '').trim() || t.description;
+  t.category = d.category || t.category;
+  if (d.date !== t.date) {
+    // Date changed: keep it in the period you're viewing so it doesn't vanish from the list.
+    t.date = d.date;
+    const natural = getPeriodForDate(t.date);
+    if (natural !== state.currentPeriodId) t.periodOverride = state.currentPeriodId;
+    else delete t.periodOverride;
+  }
+  state.editingTxId = null;
+  state.editDraft = null;
   saveState();
   render();
 }
@@ -1357,6 +1606,24 @@ function detectColumn(headers, candidates) {
   return -1;
 }
 
+// Parse a CSV date cell as a LOCAL calendar date. `new Date('2026-11-01')`
+// is treated as UTC midnight and shows up as Oct 31 in US time zones, which
+// pushed 1st-of-month charges into the wrong period. Handle the common
+// bank formats explicitly and fall back to the Date parser only for the rest.
+function parseCsvDate(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);           // 2026-11-01
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:\s.*)?$/);        // 11/01/2026 or 11/1/26
+  if (m) {
+    const yr = m[3].length === 2 ? '20' + m[3] : m[3];
+    return `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : formatISO(d);
+}
+
 function processCsvMapping() {
   const { headers, rows, mapping, invertAmount } = state.csvData;
   if (mapping.amount === -1) { alert('Please map the Amount column.'); return; }
@@ -1373,12 +1640,20 @@ function processCsvMapping() {
     const desc = mapping.description >= 0 ? (row[mapping.description] || '').trim() : 'Imported';
     let date = todayStr();
     if (mapping.date >= 0 && row[mapping.date]) {
-      const d = new Date(row[mapping.date]);
-      if (!isNaN(d.getTime())) date = formatISO(d);
+      const parsed = parseCsvDate(row[mapping.date]);
+      if (parsed) date = parsed;
     }
+    // Duplicate check: same date, same amount, same description already on file
+    // (typical when the same statement gets uploaded twice). Flag and uncheck it.
+    const normDesc = (desc || 'Imported').toLowerCase().replace(/\s+/g, ' ').trim();
+    const dup = state.transactions.some(t =>
+      t.date === date &&
+      Math.abs(t.amount - amt) < 0.005 &&
+      (t.description || '').toLowerCase().replace(/\s+/g, ' ').trim() === normDesc
+    );
     results.push({
       id: uid(), amount: amt, description: desc || 'Imported',
-      category: categorize(desc), date, source: 'csv', selected: true,
+      category: categorize(desc), date, source: 'csv', selected: !dup, duplicate: dup,
     });
   }
   if (results.length === 0) { alert('No valid transactions found.'); return; }
@@ -1389,7 +1664,7 @@ function processCsvMapping() {
 }
 
 function confirmParseResults() {
-  const toAdd = state.parseResults.filter(p => p.selected).map(({ selected, ...rest }) => rest);
+  const toAdd = state.parseResults.filter(p => p.selected).map(({ selected, duplicate, ...rest }) => rest);
   state.transactions = [...toAdd, ...state.transactions];
   state.parseResults = null;
   state.modal = null;
@@ -1403,6 +1678,7 @@ function exportData() {
     transactions: state.transactions,
     fixedOverrides: state.fixedOverrides,
     favorites: state.favorites,
+    adjustments: state.adjustments,
     exportedAt: new Date().toISOString(),
   }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
@@ -1425,6 +1701,7 @@ function importData(event) {
       state.transactions = data.transactions;
       state.fixedOverrides = data.fixedOverrides || {};
       if (Array.isArray(data.favorites)) state.favorites = data.favorites;
+      state.adjustments = Array.isArray(data.adjustments) ? data.adjustments : [];
       saveState();
       render();
       alert('Import complete!');
@@ -1460,6 +1737,7 @@ function renderApp() {
   return `
     ${renderHeader()}
     ${renderStats()}
+    ${renderRecentPeriods()}
     ${renderInputs()}
     ${renderActionsBar()}
     ${renderCategoryBreakdown()}
@@ -1501,10 +1779,12 @@ function renderStats() {
   const totalSelfCarry = state.categories.reduce((s, c) => s + getRolloverCarry(c.name, state.currentPeriodId), 0);
   const poolCarryIn = getPoolCarryIn(state.currentPeriodId);
   const totalCarry = totalSelfCarry + poolCarryIn;
+  const paidBack = paybacksInPeriod(state.currentPeriodId);
   const totalSpent = totalVariableSpent + totalFixed;
-  const remaining = totalBudget + totalCarry - totalSpent;
+  const remaining = totalBudget + totalCarry + paidBack - totalSpent;
   const txCount = getCurrentPeriodTx().length;
   const carryShown = Math.abs(totalCarry) >= 0.005;
+  const paidBackShown = paidBack >= 0.005;
 
   return `
     <div class="stats">
@@ -1526,7 +1806,66 @@ function renderStats() {
         <div class="stat-label">Remaining</div>
         <div class="stat-value ${remaining < 0 ? 'negative' : 'positive'}">$${remaining.toFixed(2)}</div>
         ${carryShown ? `<div class="stat-sub">incl. ${totalCarry < 0 ? '−' : '+'}$${Math.abs(totalCarry).toFixed(2)} rolled over</div>` : ''}
+        ${paidBackShown ? `<div class="stat-sub">incl. +$${paidBack.toFixed(2)} paid back this period</div>` : ''}
       </div>
+    </div>
+  `;
+}
+
+// Totals for any period (variable + fixed vs. budget), used by the trend strip.
+function periodTotals(periodId) {
+  let spent = 0, budget = 0;
+  state.categories.forEach(c => {
+    spent += spentInPeriodForCat(c.name, periodId);
+    budget += budgetWithAdjustments(c, periodId);
+  });
+  const txCount = state.transactions.filter(t => isTxInPeriod(t, periodId)).length;
+  return { spent, budget, txCount };
+}
+
+// The last 6 periods ending at the one in view: a mini bar per period showing
+// spend against budget, so overspending patterns are visible at a glance.
+function renderRecentPeriods() {
+  const minP = getFirstActivityPeriod();
+  if (minP === null) return '';
+  const N = 6;
+  const ids = [];
+  for (let p = state.currentPeriodId - (N - 1); p <= state.currentPeriodId; p++) ids.push(p);
+  const rows = ids.map(p => ({ id: p, ...periodTotals(p) }));
+  if (!rows.some(r => r.txCount > 0 || r.id === state.currentPeriodId)) return '';
+  const maxVal = Math.max(1, ...rows.map(r => Math.max(r.spent, r.budget)));
+  const currentId = getCurrentPeriodId();
+  const past = rows.filter(r => r.id < state.currentPeriodId && r.txCount > 0);
+  const avgSpent = past.length ? past.reduce((s, r) => s + r.spent, 0) / past.length : null;
+  return `
+    <div class="panel trend-panel">
+      <div class="trend-head">
+        <h2>${ICONS.trend} Recent periods</h2>
+        ${avgSpent !== null ? `<span class="trend-avg">avg spend over last ${past.length} period${past.length === 1 ? '' : 's'}: <strong>$${avgSpent.toFixed(2)}</strong></span>` : ''}
+      </div>
+      <div class="trend-strip">
+        ${rows.map(r => {
+          const over = r.spent > r.budget + 0.005;
+          const h = Math.round((r.spent / maxVal) * 100);
+          const bh = Math.round((r.budget / maxVal) * 100);
+          const { start } = getPeriodBounds(r.id);
+          const label = `${start.toLocaleDateString('en-US', { month: 'short' })} ${start.getDate() === 1 ? '1st' : '2nd'}`;
+          const isView = r.id === state.currentPeriodId;
+          const isNow = r.id === currentId;
+          const empty = r.txCount === 0 && !isView;
+          return `
+            <button class="trend-col ${isView ? 'viewing' : ''} ${empty ? 'empty' : ''}" data-goto-period="${r.id}" title="${esc(formatPeriodLabel(r.id))}: spent $${r.spent.toFixed(2)} of $${r.budget.toFixed(2)}${r.txCount ? ` · ${r.txCount} tx` : ''}">
+              <div class="trend-bars">
+                <div class="trend-budget" style="height:${bh}%"></div>
+                <div class="trend-spent ${over ? 'over' : ''}" style="height:${h}%"></div>
+              </div>
+              <div class="trend-amt ${over ? 'over' : ''}">$${Math.round(r.spent).toLocaleString()}</div>
+              <div class="trend-label">${label}${isNow ? ' •' : ''}</div>
+            </button>
+          `;
+        }).join('')}
+      </div>
+      <p class="help-text" style="margin-top:8px">Dark bar = spent (fixed + variable), light bar = budget for that period. Red means over. Click a column to jump to that period.</p>
     </div>
   `;
 }
@@ -1551,10 +1890,12 @@ function renderInputs() {
           <button class="tab ${state.inputTab === 'natural' ? 'active' : ''}" data-tab="natural">Quick</button>
           <button class="tab ${state.inputTab === 'form' ? 'active' : ''}" data-tab="form">Form</button>
           <button class="tab ${state.inputTab === 'bulk' ? 'active' : ''}" data-tab="bulk">Bulk</button>
+          <button class="tab ${state.inputTab === 'adjust' ? 'active' : ''}" data-tab="adjust">Pay back / Move</button>
         </div>
         ${state.inputTab === 'natural' ? renderNaturalInput() : ''}
         ${state.inputTab === 'form' ? renderFormInput() : ''}
         ${state.inputTab === 'bulk' ? renderBulkInput() : ''}
+        ${state.inputTab === 'adjust' ? renderAdjustInput() : ''}
       </div>
 
       <div class="panel">
@@ -1625,6 +1966,52 @@ function renderBulkInput() {
   `;
 }
 
+function renderAdjustInput() {
+  const f = state.adjForm;
+  const isTransfer = f.type === 'transfer';
+  const defaultDate = f.date || getDefaultEntryDate();
+  const catOptions = (selected) => state.categories.map(c =>
+    `<option value="${esc(c.name)}" ${selected === c.name ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  const balanceLine = (name) => {
+    const cat = state.categories.find(c => c.name === name);
+    if (!cat) return '';
+    const avail = availableForCat(cat, state.currentPeriodId);
+    return `<div class="adj-balance-hint">${esc(cat.name)} available now: <strong style="color:${avail < 0 ? '#b91c1c' : '#15803d'}">$${avail.toFixed(2)}</strong></div>`;
+  };
+  return `
+    <p class="hint">${isTransfer
+      ? 'Move money between categories. Net zero overall; it just changes which bucket holds it.'
+      : 'Put money back into a category after extra income, a refund, or cash you set aside. Counts as money in for this period.'}</p>
+    <div class="adj-type-row">
+      <button data-adj-type="payback" class="${!isTransfer ? 'active' : ''}">Pay back</button>
+      <button data-adj-type="transfer" class="${isTransfer ? 'active' : ''}">Move money</button>
+    </div>
+    <input type="number" id="adj-amount" placeholder="Amount ($)" step="0.01" value="${esc(f.amount)}">
+    ${isTransfer ? `
+      <div style="margin-top:8px">
+        <select id="adj-from">
+          <option value="">From category…</option>
+          ${catOptions(f.from)}
+        </select>
+        ${balanceLine(f.from)}
+      </div>` : ''}
+    <div style="margin-top:8px">
+      <select id="adj-to">
+        <option value="">${isTransfer ? 'To category…' : 'Pay back into…'}</option>
+        ${catOptions(f.to)}
+      </select>
+      ${balanceLine(f.to)}
+    </div>
+    <div class="field-row" style="margin-top:8px">
+      <input type="text" id="adj-note" placeholder="Note (optional), e.g. bonus check" value="${esc(f.note)}">
+      <input type="date" id="adj-date" value="${esc(defaultDate)}">
+    </div>
+    ${state.adjError ? `<div class="error">${ICONS.alert} ${esc(state.adjError)}</div>` : ''}
+    <button class="btn-primary" id="add-adj">${ICONS.plus} ${isTransfer ? 'Move money' : 'Pay back'}</button>
+    <p class="help-text" style="margin-top:10px">Quick box shortcuts: <code>paid back $1000 to Dining Out</code> or <code>move $200 from Groceries to Shopping</code>.</p>
+  `;
+}
+
 function renderActionsBar() {
   return `
     <div class="actions-bar">
@@ -1668,15 +2055,21 @@ function renderCategoryBreakdown() {
         const fixed = getFixedForPeriod(state.currentPeriodId, cat.name);
         const spent = varSpent + fixed;
         const base = cat.budget || 0;
+        const adj = adjustmentsForCat(cat.name, state.currentPeriodId);
+        const showAdj = Math.abs(adj) >= 0.005;
+        const baseAdj = base + adj; // this period's budget after pay backs / moves
         const mode = cat.rolloverMode || 'none';
         const hasFixed = cat.fixedMonthly > 0 || fixed > 0;
         const hasOverride = state.fixedOverrides[`${state.currentPeriodId}:${cat.name}`] !== undefined;
         const isEditing = state.openFixedEditor === cat.name;
+        const adjPill = showAdj
+          ? `<span class="adj-pill ${adj < 0 ? 'negative' : ''}" title="Money paid back into or moved into/out of this category this period">${adj < 0 ? '−' : '+'}$${Math.abs(adj).toFixed(2)} ${adj < 0 ? 'moved out' : 'added'}</span>`
+          : '';
 
-        let denomBudget = base, pill = '', extraLine = '', barColor = cat.color, amountNegative = false;
+        let denomBudget = baseAdj, pill = '', extraLine = '', barColor = cat.color, amountNegative = false;
         if (mode === 'self') {
           const carry = getRolloverCarry(cat.name, state.currentPeriodId);
-          denomBudget = base + carry;
+          denomBudget = baseAdj + carry;
           const over = spent > denomBudget;
           amountNegative = over;
           barColor = over ? '#ef4444' : cat.color;
@@ -1684,20 +2077,26 @@ function renderCategoryBreakdown() {
           pill = showCarry
             ? `<span class="rollover-pill ${carry < 0 ? 'negative' : ''}" title="Unspent budget carried in from earlier periods">${carry < 0 ? '−' : '+'}$${Math.abs(carry).toFixed(2)} rolled</span>`
             : `<span class="rollover-pill" title="Rolls unspent budget forward to itself">rolls over</span>`;
-          extraLine = showCarry ? `<div class="rolled ${carry < 0 ? 'negative' : ''}">$${base.toFixed(2)} base ${carry < 0 ? '−' : '+'} $${Math.abs(carry).toFixed(2)} rolled</div>` : '';
+          const parts = [`$${base.toFixed(2)} base`];
+          if (showCarry) parts.push(`${carry < 0 ? '−' : '+'} $${Math.abs(carry).toFixed(2)} rolled`);
+          if (showAdj) parts.push(`${adj < 0 ? '−' : '+'} $${Math.abs(adj).toFixed(2)} ${adj < 0 ? 'moved out' : 'added'}`);
+          extraLine = (showCarry || showAdj) ? `<div class="rolled ${(carry + adj) < 0 ? 'negative' : ''}">${parts.join(' ')}</div>` : '';
         } else if (mode === 'pool') {
-          denomBudget = base;
-          const overBase = spent > base;
+          denomBudget = baseAdj;
+          const overBase = spent > baseAdj;
           barColor = overBase ? '#f59e0b' : cat.color;
           pill = overBase
             ? `<span class="pool-pill draw" title="Over base this period — the shortfall is drawn from the shared pool">over base → pool</span>`
             : `<span class="pool-pill" title="Unspent budget feeds the shared pool">→ pool</span>`;
+          if (showAdj) extraLine = `<div class="rolled ${adj < 0 ? 'negative' : ''}">$${base.toFixed(2)} base ${adj < 0 ? '−' : '+'} $${Math.abs(adj).toFixed(2)} ${adj < 0 ? 'moved out' : 'added'}</div>`;
         } else {
-          denomBudget = base;
-          const over = spent > base;
+          denomBudget = baseAdj;
+          const over = spent > baseAdj;
           amountNegative = over;
           barColor = over ? '#ef4444' : cat.color;
+          if (showAdj) extraLine = `<div class="rolled ${adj < 0 ? 'negative' : ''}">$${base.toFixed(2)} base ${adj < 0 ? '−' : '+'} $${Math.abs(adj).toFixed(2)} ${adj < 0 ? 'moved out' : 'added'}</div>`;
         }
+        pill += adjPill;
         const pct = denomBudget > 0 ? (spent / denomBudget) * 100 : (spent > 0 ? 100 : 0);
 
         return `
@@ -1734,14 +2133,67 @@ function renderCategoryBreakdown() {
   `;
 }
 
+function renderAdjustmentRow(a) {
+  const toCat = state.categories.find(c => c.name === a.to);
+  const color = toCat ? toCat.color : '#6b7280';
+  const isTransfer = a.type === 'transfer';
+  const title = isTransfer
+    ? `Moved ${esc(a.from)} → ${esc(a.to)}`
+    : `Paid back into ${esc(a.to)}`;
+  return `
+    <div class="tx-row adj-row">
+      <div class="tx-bar" style="background:${esc(color)}"></div>
+      <div class="tx-info">
+        <div class="tx-desc">${title}<span class="adj-badge ${isTransfer ? 'transfer' : ''}">${isTransfer ? 'move' : 'pay back'}</span></div>
+        <div class="tx-meta">${esc(a.date)}${a.note ? ' • ' + esc(a.note) : ''}</div>
+      </div>
+      <div class="tx-amount ${isTransfer ? '' : 'credit'}">${isTransfer ? '' : '+'}$${(Number(a.amount) || 0).toFixed(2)}</div>
+      <button class="icon-btn" data-delete-adj="${esc(a.id)}" title="Delete">${ICONS.trash}</button>
+    </div>
+  `;
+}
+
+function renderTxEditRow(t) {
+  return `
+    <div class="tx-row tx-edit-row" data-edit-row="${t.id}">
+      <div class="tx-edit-grid">
+        <input type="number" step="0.01" data-edit-amount="${t.id}" value="${t.amount.toFixed(2)}" placeholder="Amount">
+        <input type="text" data-edit-desc="${t.id}" value="${esc(t.description)}" placeholder="Description">
+        <input type="date" data-edit-date="${t.id}" value="${esc(t.date)}">
+        <select data-edit-cat="${t.id}">
+          ${state.categories.map(c => `<option value="${esc(c.name)}" ${c.name === t.category ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="tx-edit-actions">
+        <button class="btn-secondary" data-edit-cancel="${t.id}" style="font-size:12px; padding:6px 10px">Cancel</button>
+        <button class="btn-success" data-edit-save="${t.id}" style="font-size:12px; padding:6px 10px">Save</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderTransactions() {
-  const tx = getCurrentPeriodTx().sort((a, b) => b.date.localeCompare(a.date));
+  const q = (state.txSearch || '').trim().toLowerCase();
+  const matches = (s) => !q || String(s || '').toLowerCase().includes(q);
+  const allTx = getCurrentPeriodTx().sort((a, b) => b.date.localeCompare(a.date));
+  const tx = allTx.filter(t => matches(t.description) || matches(t.category) || matches(t.amount.toFixed(2)) || matches(t.date));
+  const allAdj = getAdjustmentsInPeriod(state.currentPeriodId).sort((a, b) => b.date.localeCompare(a.date));
+  const adj = allAdj.filter(a => matches(a.to) || matches(a.from) || matches(a.note) || matches(a.type) || matches((Number(a.amount)||0).toFixed(2)));
+  const shownTotal = tx.reduce((s, t) => s + t.amount, 0);
+  const nothing = allTx.length === 0 && allAdj.length === 0;
   return `
     <div class="panel">
-      <h2 style="margin-bottom: 16px">Transactions — ${formatPeriodLabel(state.currentPeriodId)}</h2>
-      ${tx.length === 0 ? `<div class="empty">No variable transactions in this period yet. Fixed bills are still counted in totals above.</div>` : `
+      <div class="tx-head">
+        <h2>Transactions — ${formatPeriodLabel(state.currentPeriodId)}</h2>
+        ${nothing ? '' : `<input type="search" id="tx-search" class="tx-search" placeholder="Search this period…" value="${esc(state.txSearch || '')}">`}
+      </div>
+      ${state.undo ? `<div class="undo-bar"><span>Deleted ${esc(state.undo.label)}.</span><button id="undo-delete">Undo</button></div>` : ''}
+      ${nothing ? `<div class="empty">No variable transactions in this period yet. Fixed bills are still counted in totals above.</div>` : `
+        ${q ? `<p class="help-text" style="margin-bottom:10px">${tx.length} expense${tx.length === 1 ? '' : 's'} match${tx.length === 1 ? 'es' : ''}${tx.length ? ` · $${shownTotal.toFixed(2)}` : ''}${adj.length ? ` · ${adj.length} adjustment${adj.length === 1 ? '' : 's'}` : ''}</p>` : ''}
         <div>
+          ${adj.map(renderAdjustmentRow).join('')}
           ${tx.map(t => {
+            if (state.editingTxId === t.id) return renderTxEditRow(t);
             const cat = state.categories.find(c => c.name === t.category) || state.categories.find(c => c.name === 'Other');
             const color = cat ? cat.color : '#6b7280';
             const naturalPeriod = getPeriodForDate(t.date);
@@ -1749,7 +2201,7 @@ function renderTransactions() {
             return `
               <div class="tx-row">
                 <div class="tx-bar" style="background:${esc(color)}"></div>
-                <div class="tx-info">
+                <div class="tx-info" data-edit-tx="${t.id}" title="Click to edit">
                   <div class="tx-desc">${esc(t.description)}</div>
                   <div class="tx-meta">
                     ${t.date} • ${t.source}
@@ -1759,11 +2211,12 @@ function renderTransactions() {
                 <select data-tx-id="${t.id}" class="tx-cat-select">
                   ${state.categories.map(c => `<option value="${esc(c.name)}" ${c.name === t.category ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
                 </select>
-                <div class="tx-amount">$${t.amount.toFixed(2)}</div>
+                <div class="tx-amount" data-edit-tx="${t.id}" title="Click to edit">$${t.amount.toFixed(2)}</div>
                 <button class="icon-btn" data-delete-id="${t.id}" title="Delete">${ICONS.trash}</button>
               </div>
             `;
           }).join('')}
+          ${q && !tx.length && !adj.length ? `<div class="empty">Nothing matches "${esc(state.txSearch)}".</div>` : ''}
         </div>
       `}
     </div>
@@ -1905,6 +2358,7 @@ function renderFavoritesModal() {
 
 function renderParseModal() {
   const selectedCount = state.parseResults.filter(p => p.selected).length;
+  const dupCount = state.parseResults.filter(p => p.duplicate).length;
   return `
     <div class="modal-backdrop" data-modal-bg>
       <div class="modal">
@@ -1912,6 +2366,7 @@ function renderParseModal() {
           <div>
             <h3>Review imported transactions</h3>
             <p style="font-size:12px; color:#64748b; margin-top:4px">Uncheck unwanted ones, edit anything inline, then confirm</p>
+            ${dupCount ? `<p style="font-size:12px; color:#b45309; margin-top:4px">${dupCount} row${dupCount === 1 ? ' looks' : 's look'} like ${dupCount === 1 ? 'a duplicate' : 'duplicates'} of transactions already on file (same date, amount and description). Unchecked by default; re-check to import anyway.</p>` : ''}
           </div>
           <button class="icon-btn" id="close-parse">${ICONS.x}</button>
         </div>
@@ -1919,6 +2374,7 @@ function renderParseModal() {
           ${state.parseResults.map(p => `
             <div class="parse-row ${p.selected ? '' : 'unselected'}">
               <input type="checkbox" data-parse-toggle="${p.id}" ${p.selected ? 'checked' : ''}>
+              ${p.duplicate ? `<span class="dup-badge" title="Already on file">dup</span>` : ''}
               <input type="text" class="desc-input" data-parse-desc="${p.id}" value="${esc(p.description)}">
               <input type="date" class="date-input" data-parse-date="${p.id}" value="${esc(p.date)}">
               <select data-parse-cat="${p.id}">
@@ -1998,11 +2454,11 @@ function renderCsvMappingModal() {
 
 function attachListeners() {
   const prev = document.getElementById('prev-period');
-  if (prev) prev.onclick = () => { state.currentPeriodId--; state.openFixedEditor = null; state.form.date = ''; render(); };
+  if (prev) prev.onclick = () => { state.currentPeriodId--; state.openFixedEditor = null; state.form.date = ''; state.editingTxId = null; state.editDraft = null; render(); };
   const next = document.getElementById('next-period');
-  if (next) next.onclick = () => { state.currentPeriodId++; state.openFixedEditor = null; state.form.date = ''; render(); };
+  if (next) next.onclick = () => { state.currentPeriodId++; state.openFixedEditor = null; state.form.date = ''; state.editingTxId = null; state.editDraft = null; render(); };
   const goCur = document.getElementById('goto-current');
-  if (goCur) goCur.onclick = () => { state.currentPeriodId = getCurrentPeriodId(); state.openFixedEditor = null; state.form.date = ''; render(); };
+  if (goCur) goCur.onclick = () => { state.currentPeriodId = getCurrentPeriodId(); state.openFixedEditor = null; state.form.date = ''; state.editingTxId = null; state.editDraft = null; render(); };
 
   const settingsBtn = document.getElementById('open-settings');
   if (settingsBtn) settingsBtn.onclick = () => {
@@ -2060,8 +2516,77 @@ function attachListeners() {
   document.querySelectorAll('.tx-cat-select').forEach(s => {
     s.onchange = (e) => updateTxCategory(s.dataset.txId, e.target.value);
   });
+  // Delete is one tap now that Undo exists.
   document.querySelectorAll('[data-delete-id]').forEach(b => {
-    b.onclick = () => { if (confirm('Delete this transaction?')) deleteTransaction(b.dataset.deleteId); };
+    b.onclick = () => deleteTransaction(b.dataset.deleteId);
+  });
+  document.querySelectorAll('[data-delete-adj]').forEach(b => {
+    b.onclick = () => deleteAdjustment(b.dataset.deleteAdj);
+  });
+  const undoBtn = document.getElementById('undo-delete');
+  if (undoBtn) undoBtn.onclick = undoDelete;
+
+  // Search within the period
+  const txSearch = document.getElementById('tx-search');
+  if (txSearch) {
+    txSearch.oninput = (e) => {
+      state.txSearch = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const el = document.getElementById('tx-search');
+      if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (_) {} }
+    };
+  }
+
+  // Inline edit of a transaction
+  document.querySelectorAll('[data-edit-tx]').forEach(el => {
+    el.onclick = () => startEditTx(el.dataset.editTx);
+  });
+  document.querySelectorAll('[data-edit-amount]').forEach(inp => {
+    inp.oninput = (e) => { if (state.editDraft) state.editDraft.amount = e.target.value; };
+  });
+  document.querySelectorAll('[data-edit-desc]').forEach(inp => {
+    inp.oninput = (e) => { if (state.editDraft) state.editDraft.description = e.target.value; };
+  });
+  document.querySelectorAll('[data-edit-date]').forEach(inp => {
+    inp.oninput = (e) => { if (state.editDraft) state.editDraft.date = e.target.value; };
+  });
+  document.querySelectorAll('[data-edit-cat]').forEach(sel => {
+    sel.onchange = (e) => { if (state.editDraft) state.editDraft.category = e.target.value; };
+  });
+  document.querySelectorAll('[data-edit-save]').forEach(b => {
+    b.onclick = () => saveEditTx(b.dataset.editSave);
+  });
+  document.querySelectorAll('[data-edit-cancel]').forEach(b => {
+    b.onclick = () => { state.editingTxId = null; state.editDraft = null; render(); };
+  });
+  document.querySelectorAll('.tx-edit-row input').forEach(inp => {
+    inp.onkeydown = (e) => {
+      if (e.key === 'Enter') saveEditTx(state.editingTxId);
+      if (e.key === 'Escape') { state.editingTxId = null; state.editDraft = null; render(); }
+    };
+  });
+
+  // Pay back / Move money form
+  document.querySelectorAll('[data-adj-type]').forEach(b => {
+    b.onclick = () => { state.adjForm.type = b.dataset.adjType; state.adjError = ''; render(); };
+  });
+  const adjAmount = document.getElementById('adj-amount');
+  if (adjAmount) adjAmount.oninput = (e) => { state.adjForm.amount = e.target.value; };
+  const adjTo = document.getElementById('adj-to');
+  if (adjTo) adjTo.onchange = (e) => { state.adjForm.to = e.target.value; render(); };
+  const adjFrom = document.getElementById('adj-from');
+  if (adjFrom) adjFrom.onchange = (e) => { state.adjForm.from = e.target.value; render(); };
+  const adjNote = document.getElementById('adj-note');
+  if (adjNote) adjNote.oninput = (e) => { state.adjForm.note = e.target.value; };
+  const adjDate = document.getElementById('adj-date');
+  if (adjDate) adjDate.oninput = (e) => { state.adjForm.date = e.target.value; };
+  const addAdj = document.getElementById('add-adj');
+  if (addAdj) addAdj.onclick = submitAdjForm;
+
+  // Trend strip: jump to a period
+  document.querySelectorAll('[data-goto-period]').forEach(b => {
+    b.onclick = () => { state.currentPeriodId = parseInt(b.dataset.gotoPeriod, 10); state.openFixedEditor = null; state.form.date = ''; state.editingTxId = null; render(); };
   });
 
   document.querySelectorAll('[data-edit-fixed]').forEach(pill => {
